@@ -472,7 +472,7 @@ export const applySegmentation = (imageData, tolerance, minSize = 100, colorSche
       const pos = stack.pop();
       const cx = pos[0];
       const cy = pos[1];
-      const pixelIndex = (cy * width + cx) * 4;
+      //const pixelIndex = (cy * width + cx) * 4;
       
       // Check neighboring pixels (4-connected)
       const directions = [
