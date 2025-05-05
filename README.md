@@ -4,7 +4,6 @@
 
 A cyberpunk-themed web application for applying various image transformations.
 
-![Image Transformer Screenshot](screenshot.png)
 
 ## Features
 
