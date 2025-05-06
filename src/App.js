@@ -40,7 +40,7 @@ const App = () => {
   // Console log
   const [consoleLog, setConsoleLog] = useState([
     'SYSTEM INITIALIZED',
-    'CYBERDECK IMAGE MATRIX v2.5.7',
+    'IMAGE MATRIX v2.5.7',
     'AWAITING INPUT...'
   ]);
   
@@ -98,6 +98,8 @@ const App = () => {
         const img = new Image();
         img.onload = () => {
           setOriginalImage(img);
+          setProcessedImage(null); // Reset processed image
+          setActiveTransforms([]); // Reset transformations
           addLog(`DIMENSIONS: ${img.width}x${img.height}px`);
           addLog('IMAGE ACQUISITION COMPLETE');
         };
@@ -118,12 +120,23 @@ const App = () => {
   const applyTransform = () => {
     if (!originalImage) return;
     
+    // Get the starting image (either original or last processed)
+    const sourceCanvas = activeTransforms.length > 0 ? processedCanvasRef.current : null;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+    
+    // Set canvas dimensions
     canvas.width = originalImage.width;
     canvas.height = originalImage.height;
-    ctx.drawImage(originalImage, 0, 0);
     
+    // Draw source image to canvas
+    if (sourceCanvas) {
+      ctx.drawImage(sourceCanvas, 0, 0);
+    } else {
+      ctx.drawImage(originalImage, 0, 0);
+    }
+    
+    // Get image data for processing
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     
     // Process based on current algorithm
@@ -195,10 +208,99 @@ const App = () => {
     setTimeout(() => setGlitchEffect(false), 200);
   };
   
-  // Remove a transformation
+  // Remove a transformation and reprocess the image
   const removeTransform = (index) => {
-    setActiveTransforms(prev => prev.filter((_, i) => i !== index));
     addLog(`REMOVING: ${activeTransforms[index].type.toUpperCase()}_TRANSFORM`);
+    
+    // Update active transforms by removing the specified transform
+    setActiveTransforms(prev => prev.filter((_, i) => i !== index));
+    
+    // Reapply all remaining transforms from scratch
+    reapplyAllTransforms(index);
+  };
+  
+  // Reapply all transformations from the beginning up to a specific index
+  const reapplyAllTransforms = (removedIndex) => {
+    if (!originalImage) return;
+    
+    // Start with the original image
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = originalImage.width;
+    canvas.height = originalImage.height;
+    ctx.drawImage(originalImage, 0, 0);
+    
+    // Get initial image data
+    let currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    // Filter out the transform to be removed
+    const remainingTransforms = activeTransforms.filter((_, i) => i !== removedIndex);
+    
+    // If no transforms left, reset to original image
+    if (remainingTransforms.length === 0) {
+      setProcessedImage(null);
+      return;
+    }
+    
+    // Apply each transform in sequence
+    for (let i = 0; i < remainingTransforms.length; i++) {
+      const transform = remainingTransforms[i];
+      const params = transform.params;
+      
+      // Apply the appropriate transformation
+      switch(transform.type) {
+        case 'grayscale':
+          currentImageData = applyGrayscale(currentImageData);
+          break;
+        case 'threshold':
+          currentImageData = applyThreshold(currentImageData, params.thresholdValue);
+          break;
+        case 'edges':
+          currentImageData = applySobelEdgeDetection(currentImageData);
+          break;
+        case 'canny':
+          currentImageData = applyCannyEdgeDetection(currentImageData, params.cannyLow, params.cannyHigh);
+          break;
+        case 'segmentation':
+          currentImageData = applySegmentation(currentImageData, params.segmentTolerance, params.segmentMinSize, params.colorScheme);
+          break;
+        case 'contrast':
+          currentImageData = applyContrast(currentImageData, params.contrastValue);
+          break;
+        case 'brightness':
+          currentImageData = applyBrightness(currentImageData, params.brightnessValue);
+          break;
+        case 'sharpen':
+          currentImageData = applySharpen(currentImageData, params.sharpnessValue);
+          break;
+        case 'invert':
+          currentImageData = applyInvert(currentImageData);
+          break;
+        case 'transparency':
+          if (params.selectedColor) {
+            currentImageData = applyColorTransparency(currentImageData, params.selectedColor, params.toleranceValue);
+          }
+          break;
+        default:
+          // Do nothing for unknown transforms
+          break;
+      }
+      
+      addLog(`REAPPLYING: ${transform.type.toUpperCase()}_TRANSFORM`);
+    }
+    
+    // Display the final result
+    const processedCanvas = processedCanvasRef.current;
+    processedCanvas.width = canvas.width;
+    processedCanvas.height = canvas.height;
+    const processedCtx = processedCanvas.getContext('2d');
+    processedCtx.putImageData(currentImageData, 0, 0);
+    
+    setProcessedImage(processedCanvas.toDataURL('image/png'));
+    
+    // Trigger glitch effect
+    setGlitchEffect(true);
+    setTimeout(() => setGlitchEffect(false), 200);
   };
   
   // Save the processed image
@@ -207,7 +309,7 @@ const App = () => {
       addLog('EXPORTING PROCESSED IMAGE...');
       const link = document.createElement('a');
       link.href = processedImage;
-      link.download = 'cyberdeck-processed.png';
+      link.download = 'processed_img.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -460,7 +562,7 @@ const App = () => {
             <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
           </div>
           <h1 className="text-2xl font-bold tracking-wider text-center uppercase flex-1">
-            CyberDeck Image Transformer
+            Image Transformer
           </h1>
           <div className="text-xs">
             <div className="animate-pulse">[SYSTEM ACTIVE]</div>
