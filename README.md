@@ -20,9 +20,11 @@ A cyberpunk-themed web application for applying various image transformations.
   - Sharpening
   - Color inversion
   - Color transparency
+  - Image rotation
 - Visual cyberpunk/terminal interface
 - Save transformed images
 - Chain multiple transformations
+- glitch effect
 
 ## Tech Stack
 
