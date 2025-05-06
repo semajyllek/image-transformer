@@ -40,7 +40,7 @@ const App = () => {
   // Console log
   const [consoleLog, setConsoleLog] = useState([
     'SYSTEM INITIALIZED',
-    'IMAGE MATRIX v2.5.7',
+    'CYBERDECK IMAGE MATRIX v2.5.7',
     'AWAITING INPUT...'
   ]);
   
@@ -111,7 +111,7 @@ const App = () => {
   
   // Handle picking a color from the image
   const handlePickColor = (color) => {
-    setSelectedColor(color);
+    setSelectedColor({...color}); // Create a copy of the color object
     setShowColorPicker(false);
     addLog(`Selected color: RGB(${color.r}, ${color.g}, ${color.b})`);
   };
@@ -197,7 +197,9 @@ const App = () => {
       label: algorithm ? algorithm.label : currentAlgorithm,
       params: { 
         thresholdValue, cannyLow, cannyHigh, segmentTolerance, colorScheme,
-        contrastValue, brightnessValue, sharpnessValue, selectedColor, toleranceValue
+        contrastValue, brightnessValue, sharpnessValue, 
+        selectedColor: selectedColor ? {...selectedColor} : null, // Create a deep copy of the color object
+        toleranceValue
       }
     }]);
     
@@ -278,7 +280,9 @@ const App = () => {
           break;
         case 'transparency':
           if (params.selectedColor) {
-            currentImageData = applyColorTransparency(currentImageData, params.selectedColor, params.toleranceValue);
+            // Use a deep copy of the color to avoid reference issues
+            const colorCopy = {...params.selectedColor};
+            currentImageData = applyColorTransparency(currentImageData, colorCopy, params.toleranceValue);
           }
           break;
         default:
@@ -309,7 +313,7 @@ const App = () => {
       addLog('EXPORTING PROCESSED IMAGE...');
       const link = document.createElement('a');
       link.href = processedImage;
-      link.download = 'processed_img.png';
+      link.download = 'cyberdeck-processed.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -562,7 +566,7 @@ const App = () => {
             <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
           </div>
           <h1 className="text-2xl font-bold tracking-wider text-center uppercase flex-1">
-            Image Transformer
+            CyberDeck Image Transformer
           </h1>
           <div className="text-xs">
             <div className="animate-pulse">[SYSTEM ACTIVE]</div>
@@ -796,7 +800,7 @@ const App = () => {
       )}
       
       {/* Color Picker Modal */}
-      {showColorPicker && originalImage && (
+      {showColorPicker && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
           <div className="bg-gray-900 border border-green-500 p-4 max-w-3xl max-h-full overflow-auto">
             <div className="flex justify-between mb-4">
@@ -810,29 +814,39 @@ const App = () => {
             </div>
             
             <div className="relative cursor-crosshair">
+              {/* Use the processed image if available, otherwise use the original image */}
               <img 
-                src={originalImage.src} 
+                src={processedImage || (originalImage ? originalImage.src : '')} 
                 alt="Pick color" 
                 onClick={(e) => {
                   // Get canvas and context
                   const canvas = document.createElement('canvas');
                   const ctx = canvas.getContext('2d');
-                  canvas.width = originalImage.width;
-                  canvas.height = originalImage.height;
-                  ctx.drawImage(originalImage, 0, 0);
                   
-                  // Calculate position
-                  const rect = e.target.getBoundingClientRect();
-                  const x = Math.floor((e.clientX - rect.left) * (originalImage.width / rect.width));
-                  const y = Math.floor((e.clientY - rect.top) * (originalImage.height / rect.height));
+                  // Use the processed image for the color picker if it exists
+                  const sourceImage = new Image();
+                  sourceImage.onload = () => {
+                    // Set canvas dimensions to match the source image
+                    canvas.width = sourceImage.width;
+                    canvas.height = sourceImage.height;
+                    ctx.drawImage(sourceImage, 0, 0);
+                    
+                    // Calculate position
+                    const rect = e.target.getBoundingClientRect();
+                    const x = Math.floor((e.clientX - rect.left) * (sourceImage.width / rect.width));
+                    const y = Math.floor((e.clientY - rect.top) * (sourceImage.height / rect.height));
+                    
+                    // Get color
+                    const pixel = ctx.getImageData(x, y, 1, 1).data;
+                    handlePickColor({
+                      r: pixel[0],
+                      g: pixel[1],
+                      b: pixel[2]
+                    });
+                  };
                   
-                  // Get color
-                  const pixel = ctx.getImageData(x, y, 1, 1).data;
-                  handlePickColor({
-                    r: pixel[0],
-                    g: pixel[1],
-                    b: pixel[2]
-                  });
+                  // Set the source image to either the processed image or the original
+                  sourceImage.src = processedImage || originalImage.src;
                 }}
                 className="max-w-full max-h-[70vh] border border-gray-600"
               />
