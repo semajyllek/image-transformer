@@ -1,11 +1,11 @@
 import { hsvToRgb } from './colorUtils';
 
 /**
- * Rotates an image by a specified angle around its center
+ * Rotates an image by a specified angle around its center while keeping the original dimensions
  * 
  * @param {ImageData} imageData - The image data to process
  * @param {number} angle - Rotation angle in degrees (clockwise)
- * @returns {ImageData} The rotated image data
+ * @returns {ImageData} The rotated image data with same dimensions as original
  */
 export const applyRotation = (imageData, angle) => {
   const width = imageData.width;
@@ -19,66 +19,36 @@ export const applyRotation = (imageData, angle) => {
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
   
-  // Calculate the coordinates of the four corners after rotation
-  const halfWidth = width / 2;
-  const halfHeight = height / 2;
+  // Create a new ImageData with the SAME dimensions as the original
+  const resultData = new ImageData(width, height);
   
-  // Define corners relative to center (0,0)
-  const corners = [
-    { x: -halfWidth, y: -halfHeight }, // top-left
-    { x: halfWidth, y: -halfHeight },  // top-right
-    { x: halfWidth, y: halfHeight },   // bottom-right
-    { x: -halfWidth, y: halfHeight }   // bottom-left
-  ];
+  // Center of the image
+  const centerX = width / 2;
+  const centerY = height / 2;
   
-  // Rotate each corner around the origin
-  const rotatedCorners = corners.map(corner => {
-    return {
-      x: corner.x * cos - corner.y * sin,
-      y: corner.x * sin + corner.y * cos
-    };
-  });
-  
-  // Find the min and max x, y coordinates to determine new canvas size
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  
-  rotatedCorners.forEach(corner => {
-    minX = Math.min(minX, corner.x);
-    minY = Math.min(minY, corner.y);
-    maxX = Math.max(maxX, corner.x);
-    maxY = Math.max(maxY, corner.y);
-  });
-  
-  // Calculate new dimensions
-  const newWidth = Math.ceil(maxX - minX);
-  const newHeight = Math.ceil(maxY - minY);
-  
-  // Create a new ImageData with the new dimensions
-  const resultData = new ImageData(newWidth, newHeight);
-  
-  // Fill with transparency by default
+  // Fill with black by default (black with full opacity)
   for (let i = 0; i < resultData.data.length; i += 4) {
     resultData.data[i] = 0;     // r
     resultData.data[i + 1] = 0; // g
     resultData.data[i + 2] = 0; // b
-    resultData.data[i + 3] = 0; // a (transparent)
+    resultData.data[i + 3] = 255; // a (fully opaque black)
   }
   
-  // Map each destination pixel to its source pixel
-  for (let y = 0; y < newHeight; y++) {
-    for (let x = 0; x < newWidth; x++) {
-      // Calculate position relative to the center of the new canvas
-      const relX = x + minX;  // Transform to center-relative coordinates
-      const relY = y + minY;
+  // For each pixel in the destination image
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Calculate position relative to the center
+      const relX = x - centerX;
+      const relY = y - centerY;
       
       // Apply inverse rotation to find source pixel
-      const srcX = Math.round(relX * cos + relY * sin + halfWidth);
-      const srcY = Math.round(-relX * sin + relY * cos + halfHeight);
+      const srcX = Math.round(relX * cos + relY * sin + centerX);
+      const srcY = Math.round(-relX * sin + relY * cos + centerY);
       
       // Check if the source pixel is within bounds
       if (srcX >= 0 && srcX < width && srcY >= 0 && srcY < height) {
         const srcIndex = (srcY * width + srcX) * 4;
-        const destIndex = (y * newWidth + x) * 4;
+        const destIndex = (y * width + x) * 4;
         
         // Copy the pixel data
         resultData.data[destIndex] = data[srcIndex];         // r
@@ -86,7 +56,7 @@ export const applyRotation = (imageData, angle) => {
         resultData.data[destIndex + 2] = data[srcIndex + 2]; // b
         resultData.data[destIndex + 3] = data[srcIndex + 3]; // a
       }
-      // If source pixel is out of bounds, leave the destination transparent
+      // If source pixel is out of bounds, it remains black (already filled above)
     }
   }
   
