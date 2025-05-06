@@ -1,5 +1,7 @@
 # Image Transformer
 
+![image](image_transformer.png)
+
 **Live Demo: [https://semajyllek.github.io/image-transformer](https://semajyllek.github.io/image-transformer)**
 
 A cyberpunk-themed web application for applying various image transformations.

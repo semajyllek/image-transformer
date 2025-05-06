@@ -12,7 +12,8 @@ import {
   applyColorTransparency,
   applySobelEdgeDetection,
   applyCannyEdgeDetection,
-  applySegmentation
+  applySegmentation,
+  applyRotation
 } from './utils/transformationFunctions';
 
 const App = () => {
@@ -22,6 +23,7 @@ const App = () => {
   const [glitchEffect, setGlitchEffect] = useState(false);
   const [glitchIntensity, setGlitchIntensity] = useState(0);
   const [activeTransforms, setActiveTransforms] = useState([]);
+  const [rotationAngle, setRotationAngle] = useState(0);
   
   // State for algorithm and parameters
   const [currentAlgorithm, setCurrentAlgorithm] = useState('grayscale');
@@ -62,7 +64,8 @@ const App = () => {
     { value: 'brightness', label: 'Brightness' },
     { value: 'sharpen', label: 'Sharpen' },
     { value: 'invert', label: 'Invert Colors' },
-    { value: 'transparency', label: 'Color Transparency' }
+    { value: 'transparency', label: 'Color Transparency' },
+	{ value: 'rotation', label: 'Rotate Image' }
   ];
   
   // Color scheme options
@@ -191,42 +194,45 @@ const App = () => {
     let processedData;
     
     switch(currentAlgorithm) {
-      case 'grayscale':
-        processedData = applyGrayscale(imageData);
-        break;
-      case 'threshold':
-        processedData = applyThreshold(imageData, thresholdValue);
-        break;
-      case 'edges':
-        processedData = applySobelEdgeDetection(imageData);
-        break;
-      case 'canny':
-        processedData = applyCannyEdgeDetection(imageData, cannyLow, cannyHigh);
-        break;
-      case 'segmentation':
-        processedData = applySegmentation(imageData, segmentTolerance, segmentMinSize, colorScheme);
-        break;
-      case 'contrast':
-        processedData = applyContrast(imageData, contrastValue);
-        break;
-      case 'brightness':
-        processedData = applyBrightness(imageData, brightnessValue);
-        break;
-      case 'sharpen':
-        processedData = applySharpen(imageData, sharpnessValue);
-        break;
-      case 'invert':
-        processedData = applyInvert(imageData);
-        break;
-      case 'transparency':
-        if (selectedColor) {
-          processedData = applyColorTransparency(imageData, selectedColor, toleranceValue);
-        } else {
-          processedData = imageData; // No color selected
-        }
-        break;
-      default:
-        processedData = imageData;
+		case 'grayscale':
+			processedData = applyGrayscale(imageData);
+			break;
+		case 'threshold':
+			processedData = applyThreshold(imageData, thresholdValue);
+			break;
+		case 'edges':
+			processedData = applySobelEdgeDetection(imageData);
+			break;
+		case 'canny':
+			processedData = applyCannyEdgeDetection(imageData, cannyLow, cannyHigh);
+			break;
+		case 'segmentation':
+			processedData = applySegmentation(imageData, segmentTolerance, segmentMinSize, colorScheme);
+			break;
+		case 'contrast':
+			processedData = applyContrast(imageData, contrastValue);
+			break;
+		case 'brightness':
+			processedData = applyBrightness(imageData, brightnessValue);
+			break;
+		case 'sharpen':
+			processedData = applySharpen(imageData, sharpnessValue);
+			break;
+		case 'invert':
+			processedData = applyInvert(imageData);
+			break;
+		case 'transparency':
+			if (selectedColor) {
+				processedData = applyColorTransparency(imageData, selectedColor, toleranceValue);
+			} else {
+				processedData = imageData; // No color selected
+			}
+			break;
+		case 'rotation':
+			processedData = applyRotation(imageData, rotationAngle);
+			break;
+      	default:
+        	processedData = imageData;
     }
     
     // Display the result
@@ -247,7 +253,7 @@ const App = () => {
         thresholdValue, cannyLow, cannyHigh, segmentTolerance, colorScheme,
         contrastValue, brightnessValue, sharpnessValue, 
         selectedColor: selectedColor ? {...selectedColor} : null, // Create a deep copy of the color object
-        toleranceValue
+        toleranceValue, rotationAngle
       }
     }]);
     
@@ -334,6 +340,10 @@ const App = () => {
             currentImageData = applyColorTransparency(currentImageData, colorCopy, params.toleranceValue);
           }
           break;
+
+		case 'rotation':
+			currentImageData = applyRotation(currentImageData, params.rotationAngle);
+			break;
         default:
           // Do nothing for unknown transforms
           break;
@@ -388,30 +398,69 @@ const App = () => {
     setSharpnessValue(5);
     setToleranceValue(30);
     setSelectedColor(null);
+	setRotationAngle(0);
     addLog('SYSTEM RESET COMPLETE');
   };
 
   // Render the parameter controls based on current algorithm
   const renderParameterControls = () => {
     switch(currentAlgorithm) {
-      case 'threshold':
-        return (
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Threshold Value: {thresholdValue}</span>
-              <span>[0:255]</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="255"
-              value={thresholdValue}
-              onChange={(e) => setThresholdValue(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-full appearance-none cursor-pointer"
-            />
-          </div>
-        );
+		case 'threshold':
+			return (
+				<div>
+					<div className="flex justify-between text-xs mb-1">
+					<span>Threshold Value: {thresholdValue}</span>
+					<span>[0:255]</span>
+				</div>
+				<input
+					type="range"
+					min="0"
+					max="255"
+					value={thresholdValue}
+					onChange={(e) => setThresholdValue(parseInt(e.target.value))}
+					className="w-full h-2 bg-gray-700 rounded-full appearance-none cursor-pointer"
+				/>
+				</div>
+			);
         
+		case 'rotation':
+			return (
+			  <div>
+				<div className="flex justify-between text-xs mb-1">
+				  <span>Rotation Angle: {rotationAngle}°</span>
+				  <span>[-180:180]</span>
+				</div>
+				<input
+				  type="range"
+				  min="-180"
+				  max="180"
+				  value={rotationAngle}
+				  onChange={(e) => setRotationAngle(parseInt(e.target.value))}
+				  className="w-full h-2 bg-gray-700 rounded-full appearance-none cursor-pointer"
+				/>
+				<div className="flex justify-between mt-2">
+				  <button
+					onClick={() => setRotationAngle(rotationAngle - 90)}
+					className="px-2 py-1 text-xs bg-black hover:bg-gray-800 text-green-400 border border-green-500"
+				  >
+					-90°
+				  </button>
+				  <button
+					onClick={() => setRotationAngle(0)}
+					className="px-2 py-1 text-xs bg-black hover:bg-gray-800 text-green-400 border border-green-500"
+				  >
+					Reset
+				  </button>
+				  <button
+					onClick={() => setRotationAngle(rotationAngle + 90)}
+					className="px-2 py-1 text-xs bg-black hover:bg-gray-800 text-green-400 border border-green-500"
+				  >
+					+90°
+				  </button>
+				</div>
+			  </div>
+			);
+
       case 'canny':
         return (
           <>
