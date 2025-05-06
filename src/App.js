@@ -20,6 +20,7 @@ const App = () => {
   const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
   const [glitchEffect, setGlitchEffect] = useState(false);
+  const [glitchIntensity, setGlitchIntensity] = useState(0);
   const [activeTransforms, setActiveTransforms] = useState([]);
   
   // State for algorithm and parameters
@@ -37,10 +38,12 @@ const App = () => {
   const [selectedColor, setSelectedColor] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   
-  // Console log
+  // State for console log
   const [consoleLog, setConsoleLog] = useState([
     'SYSTEM INITIALIZED',
-    'CYBERDECK IMAGE MATRIX v2.5.7',
+    'CYBERGRID IMAGE MATRIX v3.1.4',
+    'QUANTUM RENDERER ONLINE',
+    'NEURAL FILTERS READY',
     'AWAITING INPUT...'
   ]);
   
@@ -70,16 +73,61 @@ const App = () => {
     { value: 'highContrast', label: 'High Contrast' }
   ];
   
-  // Simulated random glitch effect
+  // Advanced glitch effects with keyframes
   useEffect(() => {
-    const glitchInterval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        setGlitchEffect(true);
-        setTimeout(() => setGlitchEffect(false), 150);
+    // Add keyframe animations to the document
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes scan-line-move {
+        0% { transform: translateY(0) scaleY(1); }
+        50% { transform: translateY(${(Math.random() - 0.5) * 30}px) scaleY(${1 + Math.random() * 4}); }
+        100% { transform: translateY(0) scaleY(1); }
       }
-    }, 3000);
+      
+      @keyframes block-glitch {
+        0% { transform: translate(-50%, -50%) skew(0deg, 0deg); }
+        25% { transform: translate(-50%, -50%) skew(${(Math.random() - 0.5) * 60}deg, ${(Math.random() - 0.5) * 30}deg); }
+        50% { transform: translate(-50%, -50%) skew(${(Math.random() - 0.5) * 60}deg, ${(Math.random() - 0.5) * 30}deg); }
+        75% { transform: translate(-50%, -50%) skew(${(Math.random() - 0.5) * 60}deg, ${(Math.random() - 0.5) * 30}deg); }
+        100% { transform: translate(-50%, -50%) skew(0deg, 0deg); }
+      }
+      
+      @keyframes vertical-hold {
+        0% { transform: translateY(0); }
+        25% { transform: translateY(${(Math.random() - 0.5) * 200}px); }
+        50% { transform: translateY(${(Math.random() - 0.5) * 150}px); }
+        75% { transform: translateY(${(Math.random() - 0.5) * 100}px); }
+        100% { transform: translateY(0); }
+      }
+      
+      @keyframes text-displacement {
+        0% { opacity: 0; transform: translate(0, 0) scale(1); }
+        25% { opacity: 0.8; transform: translate(${(Math.random() - 0.5) * 50}px, ${(Math.random() - 0.5) * 50}px) scale(${0.9 + Math.random() * 0.3}); }
+        75% { opacity: 0.8; transform: translate(${(Math.random() - 0.5) * 50}px, ${(Math.random() - 0.5) * 50}px) scale(${0.9 + Math.random() * 0.3}); }
+        100% { opacity: 0; transform: translate(0, 0) scale(1); }
+      }
+      
+      @keyframes wave-distortion {
+        0% { background-position: 0% 0%; }
+        50% { background-position: ${Math.random() * 100}% ${Math.random() * 100}%; }
+        100% { background-position: 0% 0%; }
+      }
+    `;
+    document.head.appendChild(style);
     
-    return () => clearInterval(glitchInterval);
+    // Dramatic CRT screen glitch effect
+    const glitchInterval = setInterval(() => {
+      if (Math.random() > 0.75) {
+        setGlitchEffect(true);
+        setGlitchIntensity(Math.random() * 0.8 + 0.2); // Between 0.2 and 1.0
+        setTimeout(() => setGlitchEffect(false), 150 + Math.random() * 350);
+      }
+    }, 4000);
+    
+    return () => {
+      clearInterval(glitchInterval);
+      document.head.removeChild(style);
+    };
   }, []);
   
   // Add message to console log
@@ -205,9 +253,10 @@ const App = () => {
     
     addLog(`EXECUTING: ${currentAlgorithm.toUpperCase()}_TRANSFORM`);
     
-    // Trigger glitch effect
+    // Trigger enhanced glitch effect
     setGlitchEffect(true);
-    setTimeout(() => setGlitchEffect(false), 200);
+    setGlitchIntensity(Math.random() * 0.6 + 0.4); // Between 0.4 and 1.0
+    setTimeout(() => setGlitchEffect(false), 300);
   };
   
   // Remove a transformation and reprocess the image
@@ -302,9 +351,11 @@ const App = () => {
     
     setProcessedImage(processedCanvas.toDataURL('image/png'));
     
-    // Trigger glitch effect
+    // Trigger enhanced glitch effect
     setGlitchEffect(true);
-    setTimeout(() => setGlitchEffect(false), 200);
+    //setGlitchType(['horizontal', 'pixelate', 'chromatic', 'noise', 'flicker'][Math.floor(Math.random() * 5)]);
+    setGlitchIntensity(Math.random() * 0.6 + 0.4); // Between 0.4 and 1.0
+    setTimeout(() => setGlitchEffect(false), 300);
   };
   
   // Save the processed image
@@ -313,7 +364,7 @@ const App = () => {
       addLog('EXPORTING PROCESSED IMAGE...');
       const link = document.createElement('a');
       link.href = processedImage;
-      link.download = 'cyberdeck-processed.png';
+      link.download = 'processed.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -560,18 +611,16 @@ const App = () => {
       {/* Header */}
       <header className="border-b border-green-500 p-4 mb-0">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-          </div>
-          <h1 className="text-2xl font-bold tracking-wider text-center uppercase flex-1">
-            CyberDeck Image Transformer
-          </h1>
-          <div className="text-xs">
-            <div className="animate-pulse">[SYSTEM ACTIVE]</div>
-          </div>
+        <div className="flex items-center">
+          {/* Removed colored dots */}
         </div>
+        <h1 className="text-2xl font-bold tracking-wider text-center uppercase flex-1">
+          Image Transformer
+        </h1>
+        <div className="text-xs">
+          <div className="animate-pulse">[SYSTEM ACTIVE]</div>
+        </div>
+      </div>
       </header>
       
       {/* Main content */}
@@ -707,7 +756,7 @@ const App = () => {
               <canvas ref={canvasRef} className="hidden" />
               
               {originalImage ? (
-                <div className="cyber-grid inline-block border border-blue-500 p-1">
+                <div className="grid inline-block border border-blue-500 p-1">
                   <img 
                     src={originalImage.src} 
                     alt="Original" 
@@ -735,7 +784,7 @@ const App = () => {
               <canvas ref={processedCanvasRef} className="hidden" />
               
               {processedImage ? (
-                <div className="cyber-grid inline-block border border-green-500 p-1">
+                <div className="grid inline-block border border-green-500 p-1">
                   <img 
                     src={processedImage} 
                     alt="Processed" 
@@ -767,12 +816,118 @@ const App = () => {
       <footer className="border-t border-green-500 p-2 text-xs flex justify-between">
         <div>SYS.STATUS: OPERATIONAL</div>
         <div className="flex gap-4">
-          <div>CPU: {Math.floor(Math.random() * 30) + 10}%</div>
-          <div>MEM: {Math.floor(Math.random() * 40) + 60}MB</div>
-          <div>PING: {Math.floor(Math.random() * 30)}ms</div>
+          <div className="text-xs animate-pulse">[SYSTEM ACTIVE]</div>
         </div>
       </footer>
       
+      {/* Advanced glitch effects */}
+      {glitchEffect && (
+        <>
+          {/* CRT screen failure effects */}
+          <div className="fixed inset-0 pointer-events-none" style={{ 
+            zIndex: 101,
+            backdropFilter: Math.random() > 0.7 ? `hue-rotate(${Math.random() * 180}deg)` : 'none',
+            animation: `crt-flicker ${0.05 + Math.random() * 0.2}s ease-in-out`,
+            background: `
+              linear-gradient(${Math.random() * 360}deg, 
+                rgba(0,255,0,${Math.random() * 0.1}) 0%, 
+                transparent ${10 + Math.random() * 20}%, 
+                rgba(255,0,0,${Math.random() * 0.1}) ${40 + Math.random() * 20}%,
+                transparent ${60 + Math.random() * 20}%,
+                rgba(0,0,255,${Math.random() * 0.1}) 100%)
+            `,
+            boxShadow: `0 0 ${glitchIntensity * 100}px rgba(255,255,255,0.1) inset`,
+            mixBlendMode: 'overlay'
+          }}></div>
+          
+          {/* Distortion wave */}
+          <div className="fixed inset-0 pointer-events-none" style={{ 
+            zIndex: 102,
+            backgroundImage: `repeating-linear-gradient(
+              ${Math.random() * 360}deg,
+              rgba(0,255,0,${0.05 + Math.random() * 0.1}) 0%,
+              transparent 1%,
+              transparent 2%,
+              rgba(255,0,0,${0.05 + Math.random() * 0.1}) 3%,
+              transparent 4%
+            )`,
+            backgroundSize: `${100 + Math.random() * 200}% ${100 + Math.random() * 200}%`,
+            animation: `wave-distortion ${0.2 + Math.random() * 0.5}s ease-in-out`,
+            opacity: 0.7 * glitchIntensity,
+            transform: `scale(${1 + Math.random() * 0.1}, ${1 + Math.random() * 0.2}) skewX(${(Math.random() - 0.5) * 10}deg)`,
+            mixBlendMode: 'overlay'
+          }}></div>
+          
+          {/* Horizontal scan line failure (multiple lines) */}
+          {[...Array(5 + Math.floor(glitchIntensity * 10))].map((_, i) => (
+            <div key={i} className="fixed pointer-events-none" style={{ 
+              zIndex: 103,
+              height: `${1 + Math.random() * 5}px`,
+              top: `${Math.random() * 100}%`,
+              left: 0,
+              right: 0,
+              opacity: 0.7,
+              backgroundColor: `rgba(255,255,255,${0.4 + Math.random() * 0.6})`,
+              transform: `translateY(${(Math.random() - 0.5) * 10}px) scaleY(${1 + Math.random() * 3})`,
+              mixBlendMode: 'overlay',
+              filter: `blur(${Math.random() * 0.5}px) brightness(${1 + Math.random() * 2})`,
+              animation: `scan-line-move ${0.05 + Math.random() * 0.2}s linear ${Math.random() * 0.2}s`
+            }}></div>
+          ))}
+          
+          {/* Random blocks of distortion */}
+          {[...Array(Math.floor(glitchIntensity * 4))].map((_, i) => (
+            <div key={`block-${i}`} className="fixed pointer-events-none" style={{ 
+              zIndex: 104,
+              height: `${10 + Math.random() * 40}px`,
+              width: `${20 + Math.random() * 200}px`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              transform: `translate(-50%, -50%) skew(${(Math.random() - 0.5) * 40}deg, ${(Math.random() - 0.5) * 20}deg)`,
+              backgroundColor: `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},${0.1 + Math.random() * 0.2})`,
+              boxShadow: `0 0 ${10 + Math.random() * 20}px rgba(255,255,255,0.5)`,
+              mixBlendMode: 'overlay',
+              animation: `block-glitch ${0.05 + Math.random() * 0.15}s ease-in-out infinite`
+            }}></div>
+          ))}
+          
+          {/* Text displacement effect */}
+          <div className="fixed inset-0 pointer-events-none flex items-center justify-center" style={{ 
+            zIndex: 105,
+            opacity: Math.random() > 0.7 ? 0.8 : 0,
+            animation: `text-displacement ${0.1 + Math.random() * 0.15}s ease-in-out`
+          }}>
+            <div className="text-green-500 font-mono text-2xl font-bold tracking-wider" 
+              style={{
+                textShadow: `
+                  ${(Math.random() - 0.5) * 20}px ${(Math.random() - 0.5) * 20}px 5px rgba(255,0,0,0.7),
+                  ${(Math.random() - 0.5) * 20}px ${(Math.random() - 0.5) * 20}px 5px rgba(0,255,0,0.7),
+                  ${(Math.random() - 0.5) * 20}px ${(Math.random() - 0.5) * 20}px 5px rgba(0,0,255,0.7)
+                `,
+                transform: `translate(${(Math.random() - 0.5) * 30}px, ${(Math.random() - 0.5) * 30}px)`,
+                filter: `blur(${Math.random() * 2}px)`
+              }}>
+              {Math.random() > 0.5 ? 'SIGNAL LOSS' : 'SYSTEM ERROR'}
+            </div>
+          </div>
+          
+          {/* Vertical hold effect */}
+          {Math.random() > 0.5 && (
+            <div className="fixed inset-0 pointer-events-none" style={{ 
+              zIndex: 106,
+              background: `linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(0,0,0,${0.3 * glitchIntensity}) ${50 - glitchIntensity * 20}%, 
+                transparent ${50 + glitchIntensity * 20}%, 
+                transparent 100%)`,
+              animation: `vertical-hold ${0.1 + Math.random() * 0.2}s ease-in-out`,
+              transform: `translateY(${(Math.random() - 0.5) * 100}px)`,
+              mixBlendMode: 'darken'
+            }}></div>
+          )}
+        </>
+      )}
+          
       {/* Scanlines overlay */}
       <div className="fixed inset-0 pointer-events-none" style={{
         backgroundImage: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px)',
@@ -786,18 +941,6 @@ const App = () => {
         background: 'radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.5) 150%)',
         zIndex: 99
       }}></div>
-      
-      {/* Random glitch effect */}
-      {glitchEffect && (
-        <div className="fixed inset-0 pointer-events-none flex items-center justify-center" style={{ zIndex: 101 }}>
-          <div className="w-full h-2 bg-green-500 absolute" style={{ 
-            top: `${Math.random() * 100}%`,
-            opacity: 0.3,
-            left: `-${Math.random() * 10}%`,
-            width: `${100 + Math.random() * 20}%`,
-          }}></div>
-        </div>
-      )}
       
       {/* Color Picker Modal */}
       {showColorPicker && (

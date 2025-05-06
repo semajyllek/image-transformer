@@ -500,7 +500,8 @@ export const applySegmentation = (imageData, tolerance, minSize = 100, colorSche
         const ng = data[nIndex + 1];
         const nb = data[nIndex + 2];
         
-        // Calculate color difference
+        // Calculate color difference as euclidean distance
+        // between the base color and the neighbor color
         const colorDiff = Math.sqrt(
           Math.pow(baseR - nr, 2) +
           Math.pow(baseG - ng, 2) +
